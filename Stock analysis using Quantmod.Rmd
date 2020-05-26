@@ -1,0 +1,95 @@
+---
+title: "Stock analysis using Quantmod"
+author: "Manik Hindwan"
+date: "25 May 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+library(tidyverse)
+library(TTR)
+library(quantmod)
+library(PerformanceAnalytics)
+library(RColorBrewer)
+library(tseries)
+library(lubridate)
+library(Quandl)
+library(dygraphs)
+Quandl.api_key("zrcB2Ejv9UmvhPCUsy2_")
+options("getSymbols.yahoo.warning"=FALSE)
+```
+
+# Read the TESLA stock data
+```{r}
+tsla = getSymbols("TSLA", auto.assign = FALSE, warnings = F)
+tsla_daily <- dailyReturn(Ad(tsla))
+plot(tsla_daily)
+```
+
+# Let us get the adjusted daily return of facebook stock
+```{r}
+fb <- getSymbols("FB", auto.assign = F)
+fb_daily <- dailyReturn(Ad(fb))
+head(fb_daily)
+```
+
+# Now transforming the data into monthly returns
+```{r}
+start_year = 2010
+tsla_monthly <- periodReturn(tsla, period = "monthly", 
+                             subset = paste(start_year, "::", sep = ""),
+                             type = 'log') 
+colnames(tsla_monthly) <- as.character('TSLA_returns')
+fb_monthly <- periodReturn(fb, period = "monthly", 
+                           subset = paste(start_year,"::", sep=""),
+                           type= 'log') 
+colnames(fb_monthly) <- as.character('FB_returns')
+```
+
+# Merging the above data 
+```{r}
+merged_returns <- merge(tsla_monthly, fb_monthly, all = F)
+```
+
+# We will now plot the portfolio returns using dygraph
+```{r}
+dygraph(merged_returns, main = "Tesla vs Facebook monthly returns") %>% 
+  dyAxis("y", label = "%") %>% 
+  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set2"))
+```
+
+# Now allocating weights to the portfolio. Weight means the amount of stock 
+# owned / Total value of the portfolio
+# Suppose I own $4000 worth of facebook stock and $6000 worth of Tesla's
+# So my weights are Wfb = 0.4 and Wtsla = 0.6
+
+```{r}
+w = c(0.4,0.6)
+portfolio_monthly_returns <- Return.portfolio(merged_returns, weights = w)
+```
+
+# Charting the portfolio monthly returns
+```{r}
+dygraph(portfolio_monthly_returns, main = "Portfolio monthly returns") %>% 
+  dyAxis("y", label = "%")
+```
+
+# Now calculating portfolio monthly returns for $1 invested in this portfolio
+```{r}
+dollar_growth <- Return.portfolio(merged_returns, weights = w,
+                                  wealth.index = T)
+dygraph(dollar_growth, main = "How $1 has grown in this portfolio") %>% 
+  dyAxis("y", label = "%")
+                                  
+```
+
+# Now we will calculate the Sharpe ratio which is excess return per unit volatility
+```{r}
+sharpe_ratio <- round(SharpeRatio(portfolio_monthly_returns, Rf = 0.0003),4)
+cat("The sharpe ratio is:", sharpe_ratio[1,])
+```
+
