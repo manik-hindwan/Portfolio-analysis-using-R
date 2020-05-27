@@ -1,0 +1,104 @@
+---
+title: "PortfolioAnalysis"
+author: "Manik Hindwan"
+date: "26 May 2020"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include= FALSE}
+library(quantmod)
+library(dygraphs)
+library(TTR)
+library(tseries)
+library(Quandl)
+library(PerformanceAnalytics)
+library(dplyr)
+library(tidyverse)
+library(RColorBrewer)
+
+```
+
+# Create a list of stocks in the portfolio
+```{r}
+abb <- getSymbols("ABB.NS", src = "yahoo", warnings = F, auto.assign = F)
+bob <- getSymbols("BANKBARODA.NS", src = "yahoo", warnings = F, auto.assign = F)
+cg <- getSymbols("CROMPTON.NS", src = "yahoo", warnings = F, auto.assign = F)
+dabur <- getSymbols("DABUR.NS", src = "yahoo", warnings = F, auto.assign = F)
+itc <- getSymbols("ITC.NS", src = "yahoo", warnings = F, auto.assign = F)
+nstl <- getSymbols("NESTLEIND.NS", src = "yahoo", warnings = F, auto.assign = F)
+ongc <- getSymbols("ONGC.NS", src = "yahoo", warnings = F, auto.assign = F)
+tcs <- getSymbols("TCS.NS", src = "yahoo", warnings = F, auto.assign = F)
+ril <- getSymbols("RELIANCE.NS", src = "yahoo", warnings = F, auto.assign = F)
+pfzr <- getSymbols("PFIZER.NS", src = "yahoo", warnings = F, auto.assign = F)
+```
+
+# Calculate the monthly returns for the stock
+```{r}
+stockname =  list(abb, bob, cg, dabur, itc, nstl, ongc, tcs, ril, pfzr)
+year = 2008
+returns = list()
+n = length(stockname)
+for(i in 1:n)
+  {
+  returns[[i]] = periodReturn(stockname[[i]], period = "monthly", 
+                            subset = paste(year,"::", sep=""),
+                       type = 'log')
+  if(i==2){merged_returns <- merge(returns[[i-1]], returns[[i]], all=F)}
+  if(i>2){merged_returns <- merge(merged_returns, returns[[i]], all=F)}
+}
+names = c('ABB', 'BankofBaroda', 'Crompton', 'Dabur' , 'ITC', 'Nestle', 'ONGC', 'TCS', 'RIL', 'Pfizer')
+for(i in 1:length(names)){
+  colnames(merged_returns)[i] <- names[i]
+}
+
+```
+
+# We shall plot the portfolio of the stocks now 
+```{r}
+dygraph(merged_returns, main = "Comparison of various stocks in the portfolio") %>% 
+  dyAxis("y", label = "%") %>% 
+  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set2"))
+```
+
+# Calculate the portfolio returns
+```{r}
+stock_value = c(38656.80, 19582.2, 54844.95,42050, 100698, 49184, 19387, 73637, 69252, 83600)
+total_portfolio_value = sum(stock_value)
+weight<- stock_value/total_portfolio_value
+
+portfolio_return <- Return.portfolio(merged_returns, weights = weight)
+
+dygraph(portfolio_return, main = "Portfolio return") %>% 
+  dyAxis("y", label = "%")
+```
+
+# Calculate portfolio return for $1 invested
+```{r}
+portfolio_return_one <- Return.portfolio(merged_returns, weights = weight,wealth.index = TRUE)
+
+dygraph(portfolio_return_one, main = "Portfolio return for Rs. 1 invested") %>% 
+  dyAxis("y", label = "%")
+```
+
+# Calculating the Sharpe ratio
+```{r}
+sharpe_ratio <- round(SharpeRatio(portfolio_return, Rf = 0.0647), 4)
+cat("The Sharpe Ratio associated with the portfolio is:", sharpe_ratio[1,])
+```
+```{r}
+for(i in 1:length(returns))
+{
+  na.omit(returns[[i]])
+  one=list()
+  one[[i]] <- na.omit(returns[[i]])
+  s1<- round(SharpeRatio(one[[i]], Rf = 0.0647, p = 0.95),4)
+  cat(paste("Sharpe Ratio of Stock ",i,sep=" "), ":", s1[1,],"\n")
+  }
+
+```
+
