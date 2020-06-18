@@ -1,5 +1,5 @@
 ---
-title: "PortfolioAnalysis"
+title: <span style="text-decoration:underline">Portfolio Analysis</span>
 author: "Manik Hindwan"
 date: "26 May 2020"
 output: html_document
@@ -9,7 +9,15 @@ runtime: shiny
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+    
+```{r echo = FALSE}
+htmltools::img(src ="https://www.snaptest.org/mobile/img/clglogos/scmhrd.png", 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px; width:125px ; height:125px;')
+```
 
+<p><h4> <b>Below is the analysis of a portfolio consisting of 10 stocks. The weights used in the analysis have been calculated as:</b> Individual Stock's value/Total value of the portfolio</h4></p> 
+ 
 ```{r include= FALSE}
 library(quantmod)
 library(dygraphs)
@@ -23,8 +31,12 @@ library(RColorBrewer)
 
 ```
 
-# Create a list of stocks in the portfolio
-```{r}
+<p>&nbsp;</p>
+
+The stocks used in the portfolio are <span style="color:red">ABB, Bank of Baroda, Crompton Greaves, Dabur, ITC, Nestle India, ONGC, TCS, Reliance Industries Ltd and Pfizer</span>, 
+trading in the <span style="color:blue">NSE</span>.
+
+```{r include=FALSE, message = FALSE}
 abb <- getSymbols("ABB.NS", src = "yahoo", warnings = F, auto.assign = F)
 bob <- getSymbols("BANKBARODA.NS", src = "yahoo", warnings = F, auto.assign = F)
 cg <- getSymbols("CROMPTON.NS", src = "yahoo", warnings = F, auto.assign = F)
@@ -37,8 +49,10 @@ ril <- getSymbols("RELIANCE.NS", src = "yahoo", warnings = F, auto.assign = F)
 pfzr <- getSymbols("PFIZER.NS", src = "yahoo", warnings = F, auto.assign = F)
 ```
 
-# Calculate the monthly returns for the stock
-```{r}
+<p>&nbsp;</p>
+
+#### <span style = "color:Green">1. We calculate the monthly returns for the stock and then plot the portfolio of the stock returns</span>
+```{r include=FALSE}
 stockname =  list(abb, bob, cg, dabur, itc, nstl, ongc, tcs, ril, pfzr)
 year = 2008
 returns = list()
@@ -58,15 +72,17 @@ for(i in 1:length(names)){
 
 ```
 
-# We shall plot the portfolio of the stocks now 
-```{r}
+
+```{r echo = FALSE, out.width= "115%"}
 dygraph(merged_returns, main = "Comparison of various stocks in the portfolio") %>% 
   dyAxis("y", label = "%") %>% 
-  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set2"))
+  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set1"))
 ```
 
-# Calculate the portfolio returns
-```{r}
+<p>&nbsp;</p>
+
+#### <span style = "color:Green">2. Calculate the portfolio returns</span>
+```{r echo=FALSE, out.width="115%"}
 stock_value = c(38656.80, 19582.2, 54844.95,42050, 100698, 49184, 19387, 73637, 69252, 83600)
 total_portfolio_value = sum(stock_value)
 weight<- stock_value/total_portfolio_value
@@ -77,20 +93,24 @@ dygraph(portfolio_return, main = "Portfolio return") %>%
   dyAxis("y", label = "%")
 ```
 
-# Calculate portfolio return for $1 invested
-```{r}
+<p>&nbsp;</p>
+
+#### <span style = "color:Green">3. Check the portfolio return for Rs.1 invested</span>
+```{r echo = FALSE, out.width= "115%"}
 portfolio_return_one <- Return.portfolio(merged_returns, weights = weight,wealth.index = TRUE)
 
 dygraph(portfolio_return_one, main = "Portfolio return for Rs. 1 invested") %>% 
   dyAxis("y", label = "%")
 ```
 
-# Calculating the Sharpe ratio
-```{r}
+<p>&nbsp;</p>
+
+#### <span style = "color:Green">4. Calculating the Sharpe ratios for the portfolio as well as each of the stocks</span>
+```{r echo = FALSE}
 sharpe_ratio <- round(SharpeRatio(portfolio_return, Rf = 0.0647), 4)
 cat("The Sharpe Ratio associated with the portfolio is:", sharpe_ratio[1,])
 ```
-```{r}
+```{r echo = FALSE, message=FALSE}
 for(i in 1:length(returns))
 {
   na.omit(returns[[i]])
@@ -102,3 +122,40 @@ for(i in 1:length(returns))
 
 ```
 
+<p>&nbsp;</p>
+
+#### <span style = "color:Green">5. The semi-deviation or the variability of the return below the mean return is:</span>
+```{r echo = FALSE}
+t(SemiDeviation(merged_returns))
+```
+
+<p>&nbsp;</p>
+
+#### <span style = "color:Green">6. Value at risk or the largest loss the portfolio can take within the next quarter with a 95% probability is:</span>
+
+```{r echo = FALSE}
+t(VaR(merged_returns, p = 0.95))
+```
+ 
+<p>&nbsp;</p>
+
+#### <span style = "color:Green">7. The expected shortfall or the average of all losses greater than or equal to VaR</span>
+
+```{r echo = FALSE}
+t(ES(merged_returns, p = 0.95))
+```
+  
+ 
+<p>&nbsp;</p>  
+  
+<ol><span style = "color:blue"><h4>The conclusion of the above analysis elucidates the following facts:</h4></span>
+  <li><span style = "color:red">The graphs, Sharpe ratios and semideviation values are indicative of negative returns</span></li>
+  <li><span style = "color:red">The negative shortfall is indicative of a very risky portfolio</span></li>
+  <li><span style = "color:red">The worst of this portfolio may about to come as the markets plummet more and the volatility increases due to covid</span></li>
+</ol>
+
+<p>&nbsp;</p>
+
+<ol><span style = "color:blue"><h4>The recommendations for the portfolio are:</h4></span>
+  <li><span style = "color:green">For short to medium term returns, a Swedroe rebalancing strategy is recommended rather than a Buy & hold strategy</span></li>
+</ol>
